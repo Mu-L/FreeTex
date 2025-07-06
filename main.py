@@ -81,18 +81,35 @@ def render_latex_to_html(latex_code):
 
 
 def resource_path(filename: str) -> str:
-    if getattr(sys, "frozen", False):
-        # Running in a PyInstaller bundle
-        try:
-            # 使用utf-8编码处理路径，避免编码问题
-            base_path = sys._MEIPASS.encode('utf-8').decode('utf-8')
-            return os.path.join(base_path, filename)
-        except (UnicodeDecodeError, UnicodeEncodeError):
-            # 如果编码出错，尝试使用原始路径
-            return os.path.join(sys._MEIPASS, filename)
-    else:
-        # Running in normal Python environment
-        return os.path.join(os.path.abspath("."), filename)
+    """
+    获取资源文件的绝对路径，支持中文路径
+    
+    Args:
+        filename: 文件名
+    Returns:
+        str: 文件的绝对路径
+    """
+    try:
+        if getattr(sys, "frozen", False):
+            # 运行在 PyInstaller 打包环境中
+            try:
+                # 获取可执行文件所在目录
+                base_path = os.path.dirname(sys.executable)
+                # 构建资源文件的完整路径
+                full_path = os.path.join(base_path, filename)
+                # 如果文件不存在，尝试在_internal目录中查找
+                if not os.path.exists(full_path) and hasattr(sys, '_MEIPASS'):
+                    full_path = os.path.join(sys._MEIPASS, filename)
+                return os.path.normpath(full_path)
+            except Exception as e:
+                logging.error(f"处理打包环境路径时出错: {e}")
+                return filename
+        else:
+            # 运行在普通Python环境中
+            return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+    except Exception as e:
+        logging.error(f"获取资源路径时出错: {e}")
+        return filename
 
 
 class ModelStatusWidget(QWidget):
@@ -855,56 +872,92 @@ class MainWindow(QMainWindow):
 
 class App(QApplication):
     def __init__(self, argv: List[str]) -> None:
-        super().__init__(argv)
-
-        # 初始化日志
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            handlers=[
-                logging.StreamHandler(),
-            ],
-        )
-        self.logger = logging.getLogger("FreeTex.App")
-
-        self.init_cwd()
-        self.init_font()
-        self.init_window()
+        # 初始化日志系统
+        try:
+            log_dir = os.path.join(os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.getcwd(), 'logs')
+            os.makedirs(log_dir, exist_ok=True)
+            
+            logging.basicConfig(
+                level=logging.INFO,
+                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                handlers=[
+                    logging.FileHandler(os.path.join(log_dir, 'FreeTex.log'), encoding='utf-8'),
+                    logging.StreamHandler()
+                ]
+            )
+            self.logger = logging.getLogger("FreeTex.App")
+            
+            # 记录系统信息
+            self.logger.info(f"Python版本: {sys.version}")
+            self.logger.info(f"系统平台: {sys.platform}")
+            self.logger.info(f"当前工作目录: {os.getcwd()}")
+            if getattr(sys, "frozen", False):
+                self.logger.info(f"程序路径: {sys.executable}")
+                if hasattr(sys, '_MEIPASS'):
+                    self.logger.info(f"PyInstaller临时目录: {sys._MEIPASS}")
+            
+        except Exception as e:
+            print(f"初始化日志系统失败: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        try:
+            super().__init__(argv)
+            self.init_cwd()
+            self.init_font()
+            self.init_window()
+        except Exception as e:
+            if hasattr(self, 'logger'):
+                self.logger.error(f"应用程序初始化失败: {e}")
+            print(f"应用程序初始化失败: {e}")
+            raise
 
     def init_cwd(self):
         if getattr(sys, "frozen", False):
-            # Running in a PyInstaller bundle
-            # 设置环境变量以确保正确的路径处理
             try:
-                # 确保PYTHONIOENCODING设置为utf-8
-                os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
-                # 记录当前工作目录和资源目录
-                cwd = os.getcwd()
-                resource_dir = sys._MEIPASS
-                self.logger.info(f"当前工作目录: {cwd}")
-                self.logger.info(f"资源目录: {resource_dir}")
+                # 获取可执行文件所在目录
+                exe_dir = os.path.dirname(sys.executable)
+                self.logger.info(f"可执行文件目录: {exe_dir}")
+                
+                # 验证关键资源文件
+                critical_files = ['demo.yaml', 'config.json']
+                for file in critical_files:
+                    file_path = resource_path(file)
+                    if os.path.exists(file_path):
+                        self.logger.info(f"找到资源文件: {file_path}")
+                    else:
+                        self.logger.error(f"未找到资源文件: {file_path}")
+                        raise FileNotFoundError(f"关键文件未找到: {file}")
+                
             except Exception as e:
-                self.logger.warning(f"初始化工作目录时出现警告: {e}")
+                self.logger.error(f"初始化工作目录时出错: {e}")
+                raise
         else:
-            # Running in normal Python environment
             self.logger.info("在普通Python环境中运行")
 
     def init_font(self):
+        """初始化字体"""
         self.font_database = QFontDatabase()
-
+        
         def _load_font(font_db: QFontDatabase, font_path: str, *args) -> QFont:
             try:
+                # 确保字体文件路径正确
+                font_path = resource_path(font_path)
+                self.logger.debug(f"尝试加载字体: {font_path}")
+                
+                if not os.path.exists(font_path):
+                    raise FileNotFoundError(f"字体文件不存在: {font_path}")
+                
                 font_id = font_db.addApplicationFont(font_path)
                 if font_id == -1:
-                    raise RuntimeError(f"Failed to load font: {font_path}")
+                    raise RuntimeError(f"加载字体失败: {font_path}")
                 return QFont(font_db.applicationFontFamilies(font_id)[0], *args)
             except Exception as e:
-                logging.warning(f"字体加载失败: {font_path}, 错误: {e}")
-                # 返回系统默认字体
+                self.logger.warning(f"字体加载失败: {font_path}, 错误: {e}")
                 return QFont()
 
         try:
-            # 使用正确的字体文件
+            # 使用resource_path获取正确的字体文件路径
             crimson_pro_path = resource_path("resources/fonts/Crimson_Pro/CrimsonPro-VariableFont_wght.ttf")
             noto_serif_path = resource_path("resources/fonts/Noto_Serif_SC/NotoSerifSC-VariableFont_wght_3500_punc.ttf")
             
@@ -915,7 +968,7 @@ class App(QApplication):
                 '* { font-family: "Crimson Pro", "Noto Serif CJK SC"; color: black; }'
             )
         except Exception as e:
-            logging.warning(f"字体初始化失败: {e}")
+            self.logger.error(f"字体初始化失败: {e}")
             # 使用系统默认字体
             self.setStyleSheet('* { color: black; }')
 
@@ -926,11 +979,83 @@ class App(QApplication):
         self._main_window.show()
 
 
+def setup_webengine():
+    """设置 QtWebEngine 环境"""
+    try:
+        # 获取程序所在目录
+        if getattr(sys, "frozen", False):
+            app_dir = os.path.dirname(sys.executable)
+            internal_dir = os.path.join(app_dir, "_internal")
+            
+            # 设置 QtWebEngine 进程路径
+            if os.path.exists(os.path.join(internal_dir, "QtWebEngineProcess.exe")):
+                os.environ["QTWEBENGINEPROCESS_PATH"] = os.path.join(internal_dir, "QtWebEngineProcess.exe")
+            
+            # 设置其他必要的环境变量
+            os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu"
+            os.environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
+            
+            # 设置资源文件路径
+            if os.path.exists(os.path.join(internal_dir, "resources")):
+                os.environ["QTWEBENGINEPROCESS_RESOURCEPATH"] = os.path.join(internal_dir, "resources")
+            
+            # 设置翻译文件路径
+            if os.path.exists(os.path.join(internal_dir, "translations")):
+                os.environ["QTWEBENGINEPROCESS_LOCALES"] = os.path.join(internal_dir, "translations")
+            
+            print(f"WebEngine进程路径: {os.environ.get('QTWEBENGINEPROCESS_PATH', '未设置')}")
+            print(f"WebEngine资源路径: {os.environ.get('QTWEBENGINEPROCESS_RESOURCEPATH', '未设置')}")
+            print(f"WebEngine翻译路径: {os.environ.get('QTWEBENGINEPROCESS_LOCALES', '未设置')}")
+            
+    except Exception as e:
+        print(f"设置 WebEngine 环境时出错: {e}")
+
+
 if __name__ == "__main__":
-    # 启用高 DPI 支持
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-    QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) # Optional policy
-    app = App(sys.argv)
-    app.run()
-    sys.exit(app.exec_())
+    try:
+        # 创建错误日志文件
+        error_log_path = os.path.join(os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.getcwd(), 'error.log')
+        
+        # 重定向标准错误输出到文件
+        sys.stderr = open(error_log_path, 'w', encoding='utf-8')
+        
+        # 记录基本信息
+        print("=== 程序启动 ===", file=sys.stderr)
+        print(f"Python版本: {sys.version}", file=sys.stderr)
+        print(f"系统平台: {sys.platform}", file=sys.stderr)
+        print(f"当前目录: {os.getcwd()}", file=sys.stderr)
+        print(f"程序路径: {sys.executable if getattr(sys, 'frozen', False) else __file__}", file=sys.stderr)
+        if getattr(sys, "frozen", False) and hasattr(sys, '_MEIPASS'):
+            print(f"PyInstaller临时目录: {sys._MEIPASS}", file=sys.stderr)
+        
+        # 设置 QtWebEngine 环境
+        setup_webengine()
+        
+        # 启用高 DPI 支持
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+        QApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+        )
+        
+        app = App(sys.argv)
+        app.run()
+        sys.exit(app.exec_())
+    except Exception as e:
+        import traceback
+        print("\n=== 错误信息 ===", file=sys.stderr)
+        print(f"错误: {str(e)}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        
+        # 确保错误信息被写入文件
+        sys.stderr.flush()
+        
+        # 显示错误消息框
+        try:
+            from PyQt5.QtWidgets import QMessageBox
+            error_msg = f"程序启动失败!\n\n错误信息: {str(e)}\n\n详细信息已写入: {error_log_path}"
+            QMessageBox.critical(None, "错误", error_msg)
+        except:  # noqa: E722
+            pass
+        
+        sys.exit(1)
