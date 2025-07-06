@@ -763,14 +763,8 @@ class MainWindow(QMainWindow):
         self.tray_icon.activated.connect(self.tray_icon_activated)
         self.tray_icon.show()
 
-        # 显示提示信息
+        # 设置工具提示
         self.tray_icon.setToolTip("FreeTex - 智能公式识别神器")
-        self.tray_icon.showMessage(
-            "FreeTex",
-            "程序已最小化到系统托盘，双击图标可以重新打开窗口",
-            QSystemTrayIcon.Information,
-            2000,
-        )
 
     def show_from_tray(self):
         """从托盘显示窗口"""
