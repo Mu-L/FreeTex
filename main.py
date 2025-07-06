@@ -55,12 +55,10 @@ from qfluentwidgets import (
 from qfluentwidgets import (
     PushButton as FluentPushButton,
 )
+from tools.about_dialog import AboutDialog
 from tools.clipboard_handler import ClipboardHandler
 from tools.local_processor import LocalProcessor
 from tools.model_config_dialog import ModelConfigDialog
-
-# 软件版本号常量
-SOFTWARE_VERSION = "v0.3.0"
 
 
 def render_latex_to_html(latex_code):
@@ -268,16 +266,16 @@ class MainWindow(QMainWindow):
         self.modelConfigButton.setIcon(FIF.SETTING)
         self.modelConfigButton.clicked.connect(self.show_model_config)
 
-        # 添加版本号标签
-        versionLabel = QLabel(SOFTWARE_VERSION, statusBarWidget)
-        versionLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        versionLabel.setStyleSheet("color: black;")
+        # 添加关于软件按钮（替换原版本号标签）
+        self.aboutButton = FluentPushButton("关于软件", statusBarWidget)
+        self.aboutButton.setIcon(FIF.INFO)
+        self.aboutButton.clicked.connect(self.show_about_dialog)
 
         # 将组件添加到状态栏布局
         statusBarLayout.addWidget(self.modelStatus)
         statusBarLayout.addStretch(1)
         statusBarLayout.addWidget(self.modelConfigButton)
-        statusBarLayout.addWidget(versionLabel)
+        statusBarLayout.addWidget(self.aboutButton)
 
         # 图片显示区域
         self.imageCard = SimpleCardWidget(self.centralWidget)
@@ -490,7 +488,7 @@ class MainWindow(QMainWindow):
             pixmap (QPixmap): 要显示的图像
         """
         self.logger.debug(
-            f"display_result_pixmap调用. 图片有效: {not pixmap.isNull()}, 大小: {pixmap.size()}"
+            f"display_result_pixmap调用. 图片有效: {not pixmap.isNull() if pixmap else False}, 大小: {pixmap.size() if pixmap else 'None'}"
         )
 
         if pixmap and not pixmap.isNull():
@@ -521,6 +519,7 @@ class MainWindow(QMainWindow):
         """
         if not self.original_pixmap or self.original_pixmap.isNull():
             self.imageLabel.setPixmap(QPixmap())
+            self.imageLabel.setText("请上传图片或截图")
             return
 
         lbl_rect = self.imageLabel.contentsRect()
@@ -533,13 +532,16 @@ class MainWindow(QMainWindow):
             )
             return
 
+        # 创建一个空的画布，大小与标签相同
+        canvas = QPixmap(lbl_rect.size())
+        canvas.fill(Qt.transparent)
+
+        # 缩放原始图片
         scaled_pixmap = self.original_pixmap.scaled(
             max_width, max_height, Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
 
-        canvas = QPixmap(lbl_rect.size())
-        canvas.fill(Qt.transparent)
-
+        # 在画布上居中绘制缩放后的图片
         painter = QPainter(canvas)
         x = (canvas.width() - scaled_pixmap.width()) // 2
         y = (canvas.height() - scaled_pixmap.height()) // 2
@@ -554,7 +556,7 @@ class MainWindow(QMainWindow):
         窗口大小改变事件，重新缩放图片以适应新的 QLabel 大小。
         """
         super().resizeEvent(event)
-        if self.original_pixmap and not self.original_pixmap.isNull():
+        if hasattr(self, 'original_pixmap') and self.original_pixmap and not self.original_pixmap.isNull():
             QTimer.singleShot(0, self._scale_and_display_image)
 
     def load_config(self):
@@ -610,9 +612,14 @@ class MainWindow(QMainWindow):
     def handle_clipboard_image(self, image: QImage):
         """处理从剪切板粘贴的图片 (QImage)"""
         self.logger.info(f"从剪切板接收到图片. 格式: {image.format()}")
-        pixmap = QPixmap.fromImage(image)
-        if not pixmap.isNull():
-            self.display_result_pixmap(pixmap)
+        if not image.isNull():
+            pixmap = QPixmap.fromImage(image)
+            if not pixmap.isNull():
+                self.display_result_pixmap(pixmap)
+            else:
+                self.logger.warning("从QImage转换到QPixmap失败")
+                self.latexEdit.setText("剪切板中的图片无效")
+                self.imageLabel.setText("剪切板中的图片无效")
         else:
             self.logger.warning("剪切板中的图片无效")
             self.latexEdit.setText("剪切板中的图片无效")
@@ -800,6 +807,11 @@ class MainWindow(QMainWindow):
             tooltip.setState(True)
             tooltip.show()
             tooltip.move(self.width() - tooltip.width() - 20, 20)
+
+    def show_about_dialog(self):
+        """显示关于对话框"""
+        dialog = AboutDialog(self)
+        dialog.exec_()
 
 
 class App(QApplication):
