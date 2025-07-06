@@ -858,8 +858,13 @@ class App(QApplication):
                 return QFont()
 
         try:
-            self._fontIdCrimsonPro = _load_font(self.font_database, ":/CrimsonPro.ttf")
-            self._fontIdNotoSerifSC = _load_font(self.font_database, ":/NotoSerifSC.ttf")
+            # 使用正确的字体文件
+            crimson_pro_path = resource_path("resources/fonts/Crimson_Pro/CrimsonPro-VariableFont_wght.ttf")
+            noto_serif_path = resource_path("resources/fonts/Noto_Serif_SC/NotoSerifSC-VariableFont_wght_3500_punc.ttf")
+            
+            self._fontIdCrimsonPro = _load_font(self.font_database, crimson_pro_path)
+            self._fontIdNotoSerifSC = _load_font(self.font_database, noto_serif_path)
+            
             self.setStyleSheet(
                 '* { font-family: "Crimson Pro", "Noto Serif CJK SC"; color: black; }'
             )
@@ -876,6 +881,10 @@ class App(QApplication):
 
 
 if __name__ == "__main__":
+    # 启用高 DPI 支持
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) # Optional policy
     app = App(sys.argv)
     app.run()
     sys.exit(app.exec_())
