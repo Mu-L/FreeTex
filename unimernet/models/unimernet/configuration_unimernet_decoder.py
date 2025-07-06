@@ -23,7 +23,6 @@ from transformers.onnx import OnnxConfig, OnnxConfigWithPast, OnnxSeq2SeqConfigW
 from transformers.onnx.utils import compute_effective_axis_dimension
 from transformers.utils import TensorType, is_torch_available, logging
 
-
 logger = logging.get_logger(__name__)
 
 

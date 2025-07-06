@@ -341,6 +341,7 @@ class MainWindow(QMainWindow):
         self.screenshotButton = FluentPushButton("截图", self.centralWidget)
         self.screenshotButton.setIcon(FIF.CUT)
         self.screenshotButton.clicked.connect(self.start_screenshot_process)
+        self.screenshotButton.setToolTip(f"快捷键: {self.config.get('shortcuts', {}).get('screenshot', 'Ctrl+Alt+Q')}")
 
         # 复制识别结果(Latex) 按钮
         self.copyButton = FluentPushButton("复制识别结果(Latex)", self.centralWidget)
@@ -450,20 +451,53 @@ class MainWindow(QMainWindow):
         clipboard = QApplication.clipboard()
         clipboard.dataChanged.connect(self.on_clipboard_change)
         
-        # 模拟按下Win+Shift+S快捷键
-        win32api.keybd_event(win32con.VK_LWIN, 0, 0, 0)  # Win键按下
-        win32api.keybd_event(win32con.VK_LSHIFT, 0, 0, 0)  # Shift键按下
-        win32api.keybd_event(0x53, 0, 0, 0)  # S键按下
-        
-        win32api.keybd_event(0x53, 0, win32con.KEYEVENTF_KEYUP, 0)  # S键释放
-        win32api.keybd_event(win32con.VK_LSHIFT, 0, win32con.KEYEVENTF_KEYUP, 0)  # Shift键释放
-        win32api.keybd_event(win32con.VK_LWIN, 0, win32con.KEYEVENTF_KEYUP, 0)  # Win键释放
-        
-        # 显示提示
-        tooltip = StateToolTip("截图提示", "请使用Windows截图工具选择区域", self)
-        tooltip.setState(True)
-        tooltip.show()
-        tooltip.move(self.width() - tooltip.width() - 20, 20)
+        # 隐藏主窗口并等待一小段时间再触发截图
+        self.hide()
+        # 增加延迟以确保窗口完全隐藏
+        QTimer.singleShot(300, self._trigger_screenshot)
+
+    def _trigger_screenshot(self):
+        """
+        实际触发Windows截图快捷键
+        """
+        try:
+            # 释放可能已经按下的按键
+            for vk in [win32con.VK_LWIN, win32con.VK_LSHIFT, 0x53]:
+                win32api.keybd_event(vk, 0, win32con.KEYEVENTF_KEYUP, 0)
+
+            # 模拟按下Win+Shift+S快捷键
+            # 使用扫描码以提高可靠性
+            win32api.keybd_event(win32con.VK_LWIN, 0x5B, 0, 0)  # Win键按下
+            win32api.keybd_event(win32con.VK_LSHIFT, 0x2A, 0, 0)  # Shift键按下
+            win32api.keybd_event(0x53, 0x1F, 0, 0)  # S键按下
+            
+            # 适当延迟后释放按键
+            QTimer.singleShot(200, lambda: [
+                win32api.keybd_event(0x53, 0x1F, win32con.KEYEVENTF_KEYUP, 0),  # S键释放
+                win32api.keybd_event(win32con.VK_LSHIFT, 0x2A, win32con.KEYEVENTF_KEYUP, 0),  # Shift键释放
+                win32api.keybd_event(win32con.VK_LWIN, 0x5B, win32con.KEYEVENTF_KEYUP, 0)  # Win键释放
+            ])
+            
+            # 显示提示
+            tooltip = StateToolTip("截图提示", "请使用Windows截图工具选择区域", self)
+            tooltip.setState(True)
+            tooltip.show()
+            tooltip.move(self.width() - tooltip.width() - 20, 20)
+
+            # 设置定时器，如果一段时间后没有收到剪贴板变化，就重新显示窗口
+            QTimer.singleShot(10000, self._ensure_window_visible)
+            
+        except Exception as e:
+            self.logger.error(f"触发截图快捷键时出错: {e}")
+            self.show()  # 出错时确保窗口可见
+
+    def _ensure_window_visible(self):
+        """
+        确保窗口可见
+        """
+        if not self.isVisible():
+            self.show()
+            self.activateWindow()
 
     def on_clipboard_change(self):
         """
@@ -478,6 +512,11 @@ class MainWindow(QMainWindow):
                 self.logger.info("检测到新的截图")
                 # 断开信号连接，避免重复处理
                 clipboard.dataChanged.disconnect(self.on_clipboard_change)
+                # 确保窗口可见
+                if not self.isVisible():
+                    self.show()
+                    self.activateWindow()
+                # 处理图片
                 self.handle_clipboard_image(image)
 
     def display_result_pixmap(self, pixmap):
@@ -818,6 +857,16 @@ class App(QApplication):
     def __init__(self, argv: List[str]) -> None:
         super().__init__(argv)
 
+        # 初始化日志
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[
+                logging.StreamHandler(),
+            ],
+        )
+        self.logger = logging.getLogger("FreeTex.App")
+
         self.init_cwd()
         self.init_font()
         self.init_window()
@@ -838,7 +887,7 @@ class App(QApplication):
                 self.logger.warning(f"初始化工作目录时出现警告: {e}")
         else:
             # Running in normal Python environment
-            pass
+            self.logger.info("在普通Python环境中运行")
 
     def init_font(self):
         self.font_database = QFontDatabase()

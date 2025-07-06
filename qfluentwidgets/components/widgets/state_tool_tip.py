@@ -1,9 +1,9 @@
 # coding:utf-8
-from PyQt5.QtCore import QPropertyAnimation, Qt, QTimer, pyqtSignal, QPoint, QRectF
+from PyQt5.QtCore import QPoint, QPropertyAnimation, QRectF, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QLabel, QWidget, QToolButton, QGraphicsOpacityEffect
+from PyQt5.QtWidgets import QGraphicsOpacityEffect, QLabel, QToolButton, QWidget
 
-from ...common import FluentStyleSheet, isDarkTheme, Theme
+from ...common import FluentStyleSheet, Theme, isDarkTheme
 from ...common.icon import FluentIcon as FIF
 
 
