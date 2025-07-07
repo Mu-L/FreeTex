@@ -1,0 +1,142 @@
+name: Build macOS DMG
+
+on:
+  push:
+    branches:
+      - main  # 在 main 分支上的推送触发
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+
+jobs:
+  build-macos:
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        pip install dmgbuild
+    
+    - name: Build app
+      env:
+        ARCHFLAGS: "-arch ${{ matrix.arch }}"
+        MACOSX_DEPLOYMENT_TARGET: "11.0"
+      run: |
+        pyinstaller main.spec --target-arch ${{ matrix.arch }}
+        
+    - name: Create DMG
+      run: |
+        cat > dmg_settings.py << EOF
+        # -*- coding: utf-8 -*-
+        from __future__ import unicode_literals
+        
+        format = 'UDBZ'
+        files = [ ('dist/FreeTex.app', 'FreeTex.app') ]
+        symlinks = { 'Applications': '/Applications' }
+        badge_icon = 'resources/images/icon.icns'
+        background = 'docs/images/logo.png'
+        icon_locations = {
+            'FreeTex.app': (140, 120),
+            'Applications': (500, 120)
+        }
+        window_rect = ((100, 100), (640, 280))
+        default_view = 'icon-view'
+        EOF
+        
+        dmgbuild -s dmg_settings.py "FreeTex" "dist/FreeTex-${{ matrix.arch }}.dmg"
+        
+    - name: Upload DMG artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: FreeTex-macos-${{ matrix.arch }}
+        path: dist/FreeTex-${{ matrix.arch }}.dmg
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/FreeTex-${{ matrix.arch }}.dmg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-universal:
+    needs: build-macos
+    runs-on: macos-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: FreeTex-macos-*
+        path: dist
+        
+    - name: Create Universal DMG
+      run: |
+        # 解压两个架构的 app
+        hdiutil attach dist/FreeTex-x86_64.dmg
+        cp -R "/Volumes/FreeTex/FreeTex.app" dist/FreeTex-x86_64.app
+        hdiutil detach "/Volumes/FreeTex"
+        
+        hdiutil attach dist/FreeTex-arm64.dmg
+        cp -R "/Volumes/FreeTex/FreeTex.app" dist/FreeTex-arm64.app
+        hdiutil detach "/Volumes/FreeTex"
+        
+        # 创建通用二进制
+        mkdir -p dist/FreeTex-Universal.app
+        cp -R dist/FreeTex-arm64.app/ dist/FreeTex-Universal.app/
+        
+        # 使用 lipo 合并二进制文件
+        find dist/FreeTex-Universal.app -type f -name "*.so" -o -name "*.dylib" -o -name FreeTex | while read file; do
+          if [ -f "dist/FreeTex-x86_64.app/${file#dist/FreeTex-Universal.app/}" ]; then
+            lipo -create -output "$file" "$file" "dist/FreeTex-x86_64.app/${file#dist/FreeTex-Universal.app/}"
+          fi
+        done
+        
+        # 创建通用 DMG
+        cat > dmg_settings.py << EOF
+        # -*- coding: utf-8 -*-
+        from __future__ import unicode_literals
+        
+        format = 'UDBZ'
+        files = [ ('dist/FreeTex-Universal.app', 'FreeTex.app') ]
+        symlinks = { 'Applications': '/Applications' }
+        badge_icon = 'resources/images/icon.icns'
+        background = 'docs/images/logo.png'
+        icon_locations = {
+            'FreeTex.app': (140, 120),
+            'Applications': (500, 120)
+        }
+        window_rect = ((100, 100), (640, 280))
+        default_view = 'icon-view'
+        EOF
+        
+        dmgbuild -s dmg_settings.py "FreeTex" dist/FreeTex-Universal.dmg
+        
+    - name: Upload Universal DMG
+      uses: actions/upload-artifact@v4
+      with:
+        name: FreeTex-macos-universal
+        path: dist/FreeTex-Universal.dmg
+        
+    - name: Update Release with Universal DMG
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/FreeTex-Universal.dmg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
