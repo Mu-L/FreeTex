@@ -10,6 +10,6 @@ PyQt5_sip
 scipy==1.15.2
 PyQtWebEngine
 PyQtWebEngine-Qt5
-pywin32>=306
+pywin32
 opencv-python>=4.8.0
 openai>=1.12.0
