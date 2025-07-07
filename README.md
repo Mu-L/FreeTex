@@ -35,7 +35,8 @@ FreeTex是一个免费的公式智能识别软件，它可以识别图像中的�
 
 视频演示及操作教程：
 
-[![FreeTex：免费的智能公式识别神器](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zPV2zVEMG)
+[![FreeTex：免费的智能公式识别神器](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zK31zKEPp)
+
 
 ## 📦 使用方式
 
@@ -43,18 +44,20 @@ FreeTex是一个免费的公式智能识别软件，它可以识别图像中的�
 
 1. 下载软件
 
-windows系统：
+  windows系统：
 
-- [百度网盘下载地址](https://pan.baidu.com/s/1MupcVrl4epva1UP-bSWovg?pwd=8888)(提取码: 8888)
+  - [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex_setup_v1.0.0.exe)
+  - [百度网盘下载地址](https://pan.baidu.com/s/1EFkG7EKcokDDFu69fuNDNQ?pwd=8888)(提取码: 8888)
 
-macos系统：
+  macos系统(arm)：
 
-- [百度网盘下载地址](https://pan.baidu.com/s/1NstYEU4TcWubJSAO8WcLTw?pwd=8888)(提取码: 8888)
+  - [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex_setup_v1.0.0.exe)
+  - [百度网盘下载地址](https://pan.baidu.com/s/1Rc7gKEY5TvQQjOgb-TTuGw?pwd=8888)(提取码: 8888)
 
 
 2. 安装软件，开始使用
 
-具体使用方式可参考上面的适配教程。
+  具体使用方式可参考上面的适配教程。
 
 > [!NOTE]
 > windows版本使用时需放置软件在非中文路径下，否则无法正常启动。

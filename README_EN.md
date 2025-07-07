@@ -35,7 +35,7 @@ Features:
 
 Video demonstration and tutorial:
 
-[![FreeTex: Free Intelligent Formula Recognition Tool](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zPV2zVEMG)
+[![FreeTex: Free Intelligent Formula Recognition Tool](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zK31zKEPp)
 
 ## 📦 Usage
 
@@ -45,11 +45,15 @@ Video demonstration and tutorial:
 
 For Windows:
 
-- [Baidu Netdisk Download](https://pan.baidu.com/s/1MupcVrl4epva1UP-bSWovg?pwd=8888)(Extraction code: 8888)
+- [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex_setup_v1.0.0.exe)
+- [Baidu Netdisk Download](https://pan.baidu.com/s/1EFkG7EKcokDDFu69fuNDNQ?pwd=8888)(提取码: 8888)
 
-For macOS:
 
-- [Baidu Netdisk Download](https://pan.baidu.com/s/1NstYEU4TcWubJSAO8WcLTw?pwd=8888)(Extraction code: 8888)
+For macOS(arm):
+
+- [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex_setup_v1.0.0.exe)
+- [Baidu Netdisk Download](https://pan.baidu.com/s/1Rc7gKEY5TvQQjOgb-TTuGw?pwd=8888)(提取码: 8888)
+
 
 2. Install the software and start using
 
