@@ -65,7 +65,7 @@ For specific usage instructions, please refer to the tutorial above.
 Create a new environment:
 
 ```bash
-conda create -n freetex python=3.11
+conda create -n freetex python=3.8
 conda activate freetex
 ```
 

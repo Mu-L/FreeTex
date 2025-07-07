@@ -65,7 +65,7 @@ macos系统：
 
 创建新环境
 ```bash
-conda create -n freetex python=3.11
+conda create -n freetex python=3.8
 conda activate freetex
 ```
 
