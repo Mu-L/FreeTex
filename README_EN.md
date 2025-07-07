@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Version-0.2.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.0.0-blue" alt="Version">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL3.0-green" alt="License"></a>
   <h4>
     <a href="README.md">🇨🇳 Chinese</a>
@@ -14,52 +14,53 @@
 
 ## 🌟 Introduction
 
-FreeTex is a free intelligent formula recognition software that identifies mathematical formulas in images and converts them into editable LaTeX format.
+FreeTex is a free intelligent formula recognition software that can identify mathematical formulas in images and convert them into editable LaTeX format.
 
 Features:
 
-* **No Internet Needed, No Waiting**
-  The locally deployed model requires no internet connection, ensuring full data privacy.
+- No internet connection required  
+  Uses locally deployed models, eliminating the need for network calls and ensuring complete data privacy
 
-* **Multi-type Image Recognition**
-  Supports recognition of handwritten, printed, and scanned images.
+- Multi-type image recognition
+  Supports recognition of various image types including handwritten, printed, and scanned formulas
 
-* **Foolproof and Easy to Use**
-  Supports uploading images, screenshots, and clipboard pasting. Also supports hotkeys to improve efficiency.
+- Simple and user-friendly operation
+  Supports three operation modes: image upload, screenshot, and paste, with shortcut keys for improved efficiency
 
-* **Multi-format Result Export**
-  Recognized results can be copied with one click in Word or LaTeX format without extra steps.
+- Multiple export formats
+  Recognition results can be directly copied to Word or LaTeX format with one click, no additional operations needed
 
-* **Cross-platform Support**
-  Built with Python and compatible with Windows, Linux, and macOS.
+- Multiple recognition engine support
+  Supports both local recognition and multimodal model recognition
 
 Video demonstration and tutorial:
 
 [![FreeTex: Free Intelligent Formula Recognition Tool](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zPV2zVEMG)
 
-## 📦 How to Use
+## 📦 Usage
 
 ### 1. Quick Start
 
-1. **Download the Software**
+1. Download the software
 
-For Windows (no installation required):
+For Windows:
 
-* [Baidu Netdisk](https://pan.baidu.com/s/12rtlWi6S8PxHL2NQew5_rg?pwd=8888) (Code: 8888)
-* [Quark Netdisk](https://pan.quark.cn/s/65a205d8abb8)
+- [Baidu Netdisk Download](https://pan.baidu.com/s/1MupcVrl4epva1UP-bSWovg?pwd=8888)(Extraction code: 8888)
 
 For macOS:
 
-* [Baidu Netdisk](https://pan.baidu.com/s/1NstYEU4TcWubJSAO8WcLTw?pwd=8888) (Code: 8888)
-* [Quark Netdisk](https://pan.quark.cn/s/dac20f982f53)
+- [Baidu Netdisk Download](https://pan.baidu.com/s/1NstYEU4TcWubJSAO8WcLTw?pwd=8888)(Extraction code: 8888)
 
-2. **Install and Launch**
+2. Install the software and start using
 
-Refer to: [https://blog.csdn.net/qq1198768105/article/details/147739708](https://blog.csdn.net/qq1198768105/article/details/147739708)
+For specific usage instructions, please refer to the tutorial above.
+
+> [!NOTE]
+> For Windows version, the software must be placed in a non-Chinese path to run properly.
 
 ### 2. Run from Source
 
-#### Set Up Environment
+#### Environment Setup
 
 Create a new environment:
 

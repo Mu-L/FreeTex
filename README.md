@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/版本-0.3.0-blue" alt="版本">
+  <img src="https://img.shields.io/badge/版本-1.0.0-blue" alt="版本">
   <a href="LICENSE"><img src="https://img.shields.io/badge/许可证-AGPL3.0-green" alt="许可证"></a>
   <h4>
     <a href="README.md">🇨🇳 中文</a>
@@ -30,8 +30,8 @@ FreeTex是一个免费的公式智能识别软件，它可以识别图像中的�
 - 结果导出多格式
   识别结果支持直接一键复制成word或latex格式，无需额外操作
 
-- 软件多平台支持
-  使用python构建，支持Windows、Linux、MacOS等不同平台运行
+- 多识别引擎支持
+  支持本地识别和多模态模型识别两种方式
 
 视频演示及操作教程：
 
@@ -43,26 +43,21 @@ FreeTex是一个免费的公式智能识别软件，它可以识别图像中的�
 
 1. 下载软件
 
-windows系统(无需安装，开箱即用)：
+windows系统：
 
 - [百度网盘下载地址](https://pan.baidu.com/s/1MupcVrl4epva1UP-bSWovg?pwd=8888)(提取码: 8888)
-
-- [夸克网盘下载地址](https://pan.quark.cn/s/830c4ec3d61d)
 
 macos系统：
 
 - [百度网盘下载地址](https://pan.baidu.com/s/1NstYEU4TcWubJSAO8WcLTw?pwd=8888)(提取码: 8888)
 
-- [夸克网盘下载地址](https://pan.quark.cn/s/dac20f982f53)
-
 
 2. 安装软件，开始使用
 
-具体使用方式可参考：https://blog.csdn.net/qq1198768105/article/details/147739708
+具体使用方式可参考上面的适配教程。
 
 > [!NOTE]
 > windows版本使用时需放置软件在非中文路径下，否则无法正常启动。
-> 软件只识别公式，不识别文字，公式须保持亮色背景(白色最佳)
 
 ### 2. 源码运行
 
@@ -77,11 +72,6 @@ conda activate freetex
 安装依赖:
 ```bash
 pip install -r requirements.txt
-```
-
-由于unimernet的requirements会自动安装最新CPU版的pytorch，需要卸载并重新安装gpu版本的pytorch(及对应的torchvision):
-```bash
-pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu118
 ```
 
 #### 下载模型
@@ -262,11 +252,6 @@ FreeTex/
 └── uv.lock
 ```
 
-## 📮 通知
-
-征集不良案例：如果您遇到任何模型表现不佳的案例，请在issue中提交，将有助于进一步改进其算法。
-
-另外，macOS版本截图存在问题，且未同步最新版本，由于我没有mac设备，无法修复，诚邀mac开发者进行协助更新，欢迎PR。
 
 ## 🚀 鸣谢
 
