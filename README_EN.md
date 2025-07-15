@@ -51,8 +51,8 @@ For Windows:
 
 For macOS(arm):
 
-- [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex_setup_v1.0.0.exe)
-- [Baidu Netdisk Download](https://pan.baidu.com/s/1Rc7gKEY5TvQQjOgb-TTuGw?pwd=8888)(提取码: 8888)
+- [Github](https://github.com/zstar1003/FreeTex/releases/download/v0.3.0/FreeTeX.dmg)
+- [Baidu Netdisk Download](https://pan.baidu.com/s/1NstYEU4TcWubJSAO8WcLTw?pwd=8888)(提取码: 8888)
 
 
 2. Install the software and start using
