@@ -59,6 +59,7 @@ from tools.about_dialog import AboutDialog
 from tools.clipboard_handler import ClipboardHandler
 from tools.local_processor import LocalProcessor
 from tools.model_config_dialog import ModelConfigDialog
+from tools.shortcut_config_dialog import ShortcutConfigDialog
 
 
 def render_latex_to_html(latex_code):
@@ -287,6 +288,11 @@ class MainWindow(QMainWindow):
         # 添加模型状态指示器
         self.modelStatus = ModelStatusWidget(statusBarWidget)
 
+        # 添加快捷键设置按钮
+        self.shortcutConfigButton = FluentPushButton("快捷键设置", statusBarWidget)
+        self.shortcutConfigButton.setIcon(FIF.EDIT)
+        self.shortcutConfigButton.clicked.connect(self.show_shortcut_config)
+
         # 添加多模态设置按钮
         self.modelConfigButton = FluentPushButton("多模态设置", statusBarWidget)
         self.modelConfigButton.setIcon(FIF.SETTING)
@@ -300,6 +306,7 @@ class MainWindow(QMainWindow):
         # 将组件添加到状态栏布局
         statusBarLayout.addWidget(self.modelStatus)
         statusBarLayout.addStretch(1)
+        statusBarLayout.addWidget(self.shortcutConfigButton)
         statusBarLayout.addWidget(self.modelConfigButton)
         statusBarLayout.addWidget(self.aboutButton)
 
@@ -356,7 +363,7 @@ class MainWindow(QMainWindow):
 
         # 底部按钮布局
         buttonLayout = QHBoxLayout()
-        buttonLayout.setSpacing(10)
+        buttonLayout.setSpacing(15)  # 增加按钮间距
 
         # 上传图片按钮
         self.uploadButton = FluentPushButton("上传图片", self.centralWidget)
@@ -943,6 +950,18 @@ class MainWindow(QMainWindow):
         """完全退出应用程序"""
         self.tray_icon.hide()
         QApplication.quit()
+
+    def show_shortcut_config(self):
+        """显示快捷键配置对话框"""
+        dialog = ShortcutConfigDialog(self)
+        if dialog.exec_():
+            # 重新加载配置
+            self.config = self.load_config()
+            # 显示提示
+            tooltip = StateToolTip("设置已更新", "快捷键设置已保存，重启应用后生效", self)
+            tooltip.setState(True)
+            tooltip.show()
+            tooltip.move(self.width() - tooltip.width() - 20, 20)
 
     def show_model_config(self):
         """显示模型配置对话框"""
