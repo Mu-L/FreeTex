@@ -2,6 +2,7 @@ import torch
 import warnings
 import argparse
 import logging
+import platform
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import QObject, pyqtSignal, QBuffer, QByteArray, QIODevice
 from PIL import Image
@@ -33,9 +34,21 @@ class LocalProcessor(QObject):
         self.cfg_path = cfg_path
         self.model = None
         self.vis_processor = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # 智能设备选择：优先级 CUDA > MPS > CPU
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+            device_name = "CUDA"
+        elif platform.system() == "Darwin" and hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            # macOS 上优先使用 MPS (Apple Silicon GPU)
+            self.device = torch.device("mps")
+            device_name = "MPS (Apple Silicon)"
+        else:
+            self.device = torch.device("cpu")
+            device_name = "CPU"
+
         self.logger = logging.getLogger("logs/FreeTex.log")
-        self.logger.debug(f"LocalProcessor 初始化完成. 使用设备: {self.device}")
+        self.logger.info(f"LocalProcessor 初始化完成. 选择设备: {device_name} ({self.device})")
 
     def start_loading(self):
         """

@@ -545,11 +545,11 @@ class MainWindow(QMainWindow):
 
                 except ImportError:
                     self.logger.error("Windows平台需要安装 pywin32 库")
-                    self.show()
+                    self._show_window_safely()
                     return
             else:
                 self.logger.warning(f"不支持的平台: {current_platform}")
-                self.show()
+                self._show_window_safely()
                 return
 
             # 设置定时器，如果一段时间后没有收到剪贴板变化，就重新显示窗口
@@ -557,7 +557,7 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self.logger.error(f"触发截图时出错: {e}")
-            self.show()  # 出错时确保窗口可见
+            self._show_window_safely()  # 出错时确保窗口可见
 
     def _check_screenshot_process(self, process):
         """
@@ -574,7 +574,7 @@ class MainWindow(QMainWindow):
                     self.logger.error(f"截图失败: {stderr_output}")
 
                 # 显示权限提示
-                self.show()
+                self._show_window_safely()
                 tooltip = StateToolTip(
                     "需要权限",
                     "请在\"系统设置 > 隐私与安全性 > 屏幕录制\"中授权此应用",
@@ -589,8 +589,23 @@ class MainWindow(QMainWindow):
         确保窗口可见
         """
         if not self.isVisible():
-            self.show()
-            self.activateWindow()
+            # 使用 QTimer 延迟显示窗口,避免 macOS IMK 错误
+            QTimer.singleShot(100, lambda: self._show_window_safely())
+
+    def _show_window_safely(self):
+        """
+        安全地显示窗口,避免 macOS IMK 错误
+        """
+        try:
+            if not self.isVisible():
+                self.show()
+                self.raise_()
+                self.activateWindow()
+                # 在 macOS 上，确保窗口获得焦点
+                if platform.system() == "Darwin":
+                    QTimer.singleShot(50, lambda: self.activateWindow())
+        except Exception as e:
+            self.logger.error(f"显示窗口时出错: {e}")
 
     def on_clipboard_change(self):
         """
@@ -604,13 +619,14 @@ class MainWindow(QMainWindow):
             if not image.isNull():
                 self.logger.info("检测到新的截图")
                 # 断开信号连接，避免重复处理
-                clipboard.dataChanged.disconnect(self.on_clipboard_change)
-                # 确保窗口可见
-                if not self.isVisible():
-                    self.show()
-                    self.activateWindow()
-                # 处理图片
-                self.handle_clipboard_image(image)
+                try:
+                    clipboard.dataChanged.disconnect(self.on_clipboard_change)
+                except:
+                    pass  # 如果已经断开连接，忽略错误
+                # 使用安全的方式显示窗口
+                self._show_window_safely()
+                # 延迟处理图片，确保窗口完全显示
+                QTimer.singleShot(100, lambda: self.handle_clipboard_image(image))
 
     def display_result_pixmap(self, pixmap):
         """
