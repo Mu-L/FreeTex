@@ -1,11 +1,11 @@
 import json
 import logging
 import os
+import platform
+import subprocess
 import sys
 from typing import List
 
-import win32api
-import win32con
 from latex2mathml.converter import convert
 from PyQt5.QtCore import (
     QFile,
@@ -461,13 +461,17 @@ class MainWindow(QMainWindow):
 
     def start_screenshot_process(self):
         """
-        触发Windows自带的截图功能(Win+Shift+S)
+        触发系统截图功能
+        macOS: 使用 screencapture 命令
+        Windows: 使用 Win+Shift+S 快捷键
         """
-        self.logger.info("触发Windows截图...")
+        current_platform = platform.system()
+        self.logger.info(f"触发截图... 当前平台: {current_platform}")
+
         # 确保剪贴板变化信号已连接
         clipboard = QApplication.clipboard()
         clipboard.dataChanged.connect(self.on_clipboard_change)
-        
+
         # 隐藏主窗口并等待一小段时间再触发截图
         self.hide()
         # 增加延迟以确保窗口完全隐藏
@@ -475,37 +479,71 @@ class MainWindow(QMainWindow):
 
     def _trigger_screenshot(self):
         """
-        实际触发Windows截图快捷键
+        实际触发系统截图
+        macOS: 调用 screencapture -i -c 命令
+        Windows: 模拟 Win+Shift+S 快捷键
         """
         try:
-            # 释放可能已经按下的按键
-            for vk in [win32con.VK_LWIN, win32con.VK_LSHIFT, 0x53]:
-                win32api.keybd_event(vk, 0, win32con.KEYEVENTF_KEYUP, 0)
+            current_platform = platform.system()
 
-            # 模拟按下Win+Shift+S快捷键
-            # 使用扫描码以提高可靠性
-            win32api.keybd_event(win32con.VK_LWIN, 0x5B, 0, 0)  # Win键按下
-            win32api.keybd_event(win32con.VK_LSHIFT, 0x2A, 0, 0)  # Shift键按下
-            win32api.keybd_event(0x53, 0x1F, 0, 0)  # S键按下
-            
-            # 适当延迟后释放按键
-            QTimer.singleShot(200, lambda: [
-                win32api.keybd_event(0x53, 0x1F, win32con.KEYEVENTF_KEYUP, 0),  # S键释放
-                win32api.keybd_event(win32con.VK_LSHIFT, 0x2A, win32con.KEYEVENTF_KEYUP, 0),  # Shift键释放
-                win32api.keybd_event(win32con.VK_LWIN, 0x5B, win32con.KEYEVENTF_KEYUP, 0)  # Win键释放
-            ])
-            
-            # 显示提示
-            tooltip = StateToolTip("截图提示", "请使用Windows截图工具选择区域", self)
-            tooltip.setState(True)
-            tooltip.show()
-            tooltip.move(self.width() - tooltip.width() - 20, 20)
+            if current_platform == "Darwin":  # macOS
+                self.logger.info("使用 macOS screencapture 命令")
+                # -i: 交互式截图（用户选择区域）
+                # -c: 将截图保存到剪贴板
+                subprocess.Popen(
+                    ["screencapture", "-i", "-c"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+
+                # 显示提示
+                tooltip = StateToolTip("截图提示", "请选择要截取的区域", self)
+                tooltip.setState(True)
+                tooltip.show()
+                tooltip.move(self.width() - tooltip.width() - 20, 20)
+
+            elif current_platform == "Windows":
+                # Windows 平台需要 pywin32 库
+                try:
+                    import win32api
+                    import win32con
+
+                    # 释放可能已经按下的按键
+                    for vk in [win32con.VK_LWIN, win32con.VK_LSHIFT, 0x53]:
+                        win32api.keybd_event(vk, 0, win32con.KEYEVENTF_KEYUP, 0)
+
+                    # 模拟按下Win+Shift+S快捷键
+                    win32api.keybd_event(win32con.VK_LWIN, 0x5B, 0, 0)  # Win键按下
+                    win32api.keybd_event(win32con.VK_LSHIFT, 0x2A, 0, 0)  # Shift键按下
+                    win32api.keybd_event(0x53, 0x1F, 0, 0)  # S键按下
+
+                    # 适当延迟后释放按键
+                    QTimer.singleShot(200, lambda: [
+                        win32api.keybd_event(0x53, 0x1F, win32con.KEYEVENTF_KEYUP, 0),
+                        win32api.keybd_event(win32con.VK_LSHIFT, 0x2A, win32con.KEYEVENTF_KEYUP, 0),
+                        win32api.keybd_event(win32con.VK_LWIN, 0x5B, win32con.KEYEVENTF_KEYUP, 0)
+                    ])
+
+                    # 显示提示
+                    tooltip = StateToolTip("截图提示", "请使用Windows截图工具选择区域", self)
+                    tooltip.setState(True)
+                    tooltip.show()
+                    tooltip.move(self.width() - tooltip.width() - 20, 20)
+
+                except ImportError:
+                    self.logger.error("Windows平台需要安装 pywin32 库")
+                    self.show()
+                    return
+            else:
+                self.logger.warning(f"不支持的平台: {current_platform}")
+                self.show()
+                return
 
             # 设置定时器，如果一段时间后没有收到剪贴板变化，就重新显示窗口
             QTimer.singleShot(10000, self._ensure_window_visible)
-            
+
         except Exception as e:
-            self.logger.error(f"触发截图快捷键时出错: {e}")
+            self.logger.error(f"触发截图时出错: {e}")
             self.show()  # 出错时确保窗口可见
 
     def _ensure_window_visible(self):
