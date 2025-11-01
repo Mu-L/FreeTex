@@ -1,4 +1,5 @@
 # coding:utf-8
+import platform
 from enum import Enum
 from typing import List, Union
 
@@ -188,8 +189,17 @@ class MenuActionListWidget(QListWidget):
         self.setItemDelegate(ShortcutMenuItemDelegate(self))
 
         self.scrollDelegate = SmoothScrollDelegate(self)
-        self.setStyleSheet(
-            'MenuActionListWidget{font: 14px "Segoe UI", "Microsoft YaHei", "PingFang SC"}')
+
+        # 根据平台设置字体,避免在macOS上查找不存在的Windows字体
+        system = platform.system()
+        if system == 'Darwin':  # macOS
+            font_families = '"PingFang SC", "Hiragino Sans GB", "STHeiti"'
+        elif system == 'Windows':
+            font_families = '"Segoe UI", "Microsoft YaHei", "SimSun"'
+        else:  # Linux
+            font_families = '"Noto Sans", "Liberation Sans", "DejaVu Sans"'
+
+        self.setStyleSheet(f'MenuActionListWidget{{font: 14px {font_families}}}')
 
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)

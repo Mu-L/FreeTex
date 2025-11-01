@@ -1,4 +1,5 @@
 # coding: utf-8
+import platform
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 
@@ -32,7 +33,16 @@ def getFont(fontSize=14, weight=QFont.Normal):
         font weight
     """
     font = QFont()
-    font.setFamilies(['Segoe UI', 'Microsoft YaHei', 'PingFang SC'])
+
+    # 根据平台设置字体优先级,避免在macOS上查找不存在的Windows字体
+    system = platform.system()
+    if system == 'Darwin':  # macOS
+        font.setFamilies(['PingFang SC', 'Hiragino Sans GB', 'STHeiti'])
+    elif system == 'Windows':
+        font.setFamilies(['Segoe UI', 'Microsoft YaHei', 'SimSun'])
+    else:  # Linux 或其他
+        font.setFamilies(['Noto Sans', 'Liberation Sans', 'DejaVu Sans'])
+
     font.setPixelSize(fontSize)
     font.setWeight(weight)
     return font

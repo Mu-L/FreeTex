@@ -1,4 +1,5 @@
 # coding:utf-8
+import platform
 from enum import Enum
 from string import Template
 from typing import List, Union
@@ -82,7 +83,19 @@ def applyThemeColor(qss: str):
     """
     template = QssTemplate(qss)
     mappings = {c.value: c.name() for c in ThemeColor._member_map_.values()}
-    return template.safe_substitute(mappings)
+    qss = template.safe_substitute(mappings)
+
+    # 根据平台替换字体,避免在macOS上查找不存在的Windows字体
+    system = platform.system()
+    if system == 'Darwin':  # macOS
+        # 将 Windows 字体替换为 macOS 系统字体
+        qss = qss.replace("'Segoe UI'", "'PingFang SC'")
+        qss = qss.replace('"Segoe UI"', '"PingFang SC"')
+        qss = qss.replace("'Microsoft YaHei'", "'PingFang SC'")
+        qss = qss.replace('"Microsoft YaHei"', '"PingFang SC"')
+    # Windows 和 Linux 保持原样
+
+    return qss
 
 
 class StyleSheetBase:

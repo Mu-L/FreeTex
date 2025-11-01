@@ -260,11 +260,20 @@ class MainWindow(QMainWindow):
         self.resize(1000, 800)
         self.setWindowTitle("FreeTex - 免费的智能公式识别神器")
 
-        icon_path = "resources/images/icon.ico"
+        # 根据平台选择合适的图标格式
+        if platform.system() == "Darwin":  # macOS
+            icon_path = "resources/images/icon.icns"
+        else:  # Windows 和其他平台
+            icon_path = "resources/images/icon.ico"
+
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         else:
             self.logger.warning(f"图标文件未找到: {icon_path}")
+            # 尝试使用 PNG 作为备选
+            fallback_path = "resources/images/icon.png"
+            if os.path.exists(fallback_path):
+                self.setWindowIcon(QIcon(fallback_path))
 
     def initWidgets(self):
         """
@@ -490,17 +499,21 @@ class MainWindow(QMainWindow):
                 self.logger.info("使用 macOS screencapture 命令")
                 # -i: 交互式截图（用户选择区域）
                 # -c: 将截图保存到剪贴板
-                subprocess.Popen(
-                    ["screencapture", "-i", "-c"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                # -x: 不播放截图声音
+                process = subprocess.Popen(
+                    ["screencapture", "-i", "-c", "-x"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
                 )
 
                 # 显示提示
-                tooltip = StateToolTip("截图提示", "请选择要截取的区域", self)
+                tooltip = StateToolTip("截图提示", "请选择要截取的区域（按 ESC 取消）", self)
                 tooltip.setState(True)
                 tooltip.show()
                 tooltip.move(self.width() - tooltip.width() - 20, 20)
+
+                # 检查进程是否成功启动
+                QTimer.singleShot(500, lambda: self._check_screenshot_process(process))
 
             elif current_platform == "Windows":
                 # Windows 平台需要 pywin32 库
@@ -545,6 +558,31 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"触发截图时出错: {e}")
             self.show()  # 出错时确保窗口可见
+
+    def _check_screenshot_process(self, process):
+        """
+        检查截图进程的状态（仅用于 macOS）
+        """
+        # 检查进程是否已结束
+        poll_result = process.poll()
+        if poll_result is not None:
+            # 进程已结束，检查返回码
+            if poll_result != 0:
+                # 截图失败，可能是权限问题
+                stderr_output = process.stderr.read().decode('utf-8', errors='ignore')
+                if stderr_output:
+                    self.logger.error(f"截图失败: {stderr_output}")
+
+                # 显示权限提示
+                self.show()
+                tooltip = StateToolTip(
+                    "需要权限",
+                    "请在\"系统设置 > 隐私与安全性 > 屏幕录制\"中授权此应用",
+                    self
+                )
+                tooltip.setState(False)
+                tooltip.show()
+                tooltip.move(self.width() - tooltip.width() - 20, 20)
 
     def _ensure_window_visible(self):
         """
@@ -976,35 +1014,69 @@ class App(QApplication):
     def init_font(self):
         """初始化字体"""
         self.font_database = QFontDatabase()
-        
-        def _load_font(font_db: QFontDatabase, font_path: str, *args) -> QFont:
+
+        def _load_font(font_db: QFontDatabase, font_path: str, *args):
             try:
                 # 确保字体文件路径正确
                 font_path = resource_path(font_path)
                 self.logger.debug(f"尝试加载字体: {font_path}")
-                
+
                 if not os.path.exists(font_path):
                     raise FileNotFoundError(f"字体文件不存在: {font_path}")
-                
+
                 font_id = font_db.addApplicationFont(font_path)
                 if font_id == -1:
                     raise RuntimeError(f"加载字体失败: {font_path}")
-                return QFont(font_db.applicationFontFamilies(font_id)[0], *args)
+
+                font_families = font_db.applicationFontFamilies(font_id)
+                if font_families:
+                    family_name = font_families[0]
+                    self.logger.info(f"成功加载字体: {family_name} (来自 {os.path.basename(font_path)})")
+                    return family_name, QFont(family_name, *args)
+                else:
+                    raise RuntimeError(f"无法获取字体家族名称: {font_path}")
             except Exception as e:
                 self.logger.warning(f"字体加载失败: {font_path}, 错误: {e}")
-                return QFont()
+                return None, QFont()
 
         try:
             # 使用resource_path获取正确的字体文件路径
             crimson_pro_path = resource_path("resources/fonts/Crimson_Pro/CrimsonPro-VariableFont_wght.ttf")
             noto_serif_path = resource_path("resources/fonts/Noto_Serif_SC/NotoSerifSC-VariableFont_wght_3500_punc.ttf")
-            
-            self._fontIdCrimsonPro = _load_font(self.font_database, crimson_pro_path)
-            self._fontIdNotoSerifSC = _load_font(self.font_database, noto_serif_path)
-            
-            self.setStyleSheet(
-                '* { font-family: "Crimson Pro", "Noto Serif CJK SC"; color: black; }'
-            )
+
+            crimson_family, self._fontIdCrimsonPro = _load_font(self.font_database, crimson_pro_path)
+            noto_family, self._fontIdNotoSerifSC = _load_font(self.font_database, noto_serif_path)
+
+            # 构建字体家族列表，只包含成功加载的字体
+            font_families = []
+            if crimson_family:
+                font_families.append(f'"{crimson_family}"')
+            if noto_family:
+                font_families.append(f'"{noto_family}"')
+
+            # 如果有字体加载成功，使用它们；否则使用系统默认字体
+            if font_families:
+                font_family_str = ", ".join(font_families)
+                # 根据平台添加系统字体作为后备
+                if platform.system() == 'Darwin':  # macOS
+                    fallback_fonts = '"PingFang SC", "Hiragino Sans GB", "STHeiti", sans-serif'
+                elif platform.system() == 'Windows':
+                    fallback_fonts = '"Segoe UI", "Microsoft YaHei", "SimSun", sans-serif'
+                else:  # Linux
+                    fallback_fonts = '"Noto Sans", "Liberation Sans", "DejaVu Sans", sans-serif'
+                full_font_family = f'{font_family_str}, {fallback_fonts}'
+                self.setStyleSheet(f'* {{ font-family: {full_font_family}; color: black; }}')
+                self.logger.info(f"应用字体样式: {full_font_family}")
+            else:
+                # 使用系统默认字体
+                if platform.system() == 'Darwin':  # macOS
+                    fallback_fonts = '"PingFang SC", "Hiragino Sans GB", "STHeiti", sans-serif'
+                elif platform.system() == 'Windows':
+                    fallback_fonts = '"Segoe UI", "Microsoft YaHei", "SimSun", sans-serif'
+                else:  # Linux
+                    fallback_fonts = '"Noto Sans", "Liberation Sans", "DejaVu Sans", sans-serif'
+                self.setStyleSheet(f'* {{ font-family: {fallback_fonts}; color: black; }}')
+                self.logger.warning("没有成功加载自定义字体，使用系统默认字体")
         except Exception as e:
             self.logger.error(f"字体初始化失败: {e}")
             # 使用系统默认字体
