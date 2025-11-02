@@ -184,7 +184,8 @@ class ModelConfigDialog(QDialog):
         """从配置文件加载设置"""
         try:
             import json
-            with open("config.json", "r", encoding="utf-8") as f:
+            config_path = resource_path("config.json")
+            with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 model_config = config.get("model_config", {})
                 
@@ -215,9 +216,10 @@ class ModelConfigDialog(QDialog):
         """保存设置到配置文件"""
         try:
             import json
+            config_path = resource_path("config.json")
             # 读取现有配置
             try:
-                with open("config.json", "r", encoding="utf-8") as f:
+                with open(config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
             except:
                 config = {}
@@ -233,7 +235,7 @@ class ModelConfigDialog(QDialog):
             }
 
             # 保存配置
-            with open("config.json", "w", encoding="utf-8") as f:
+            with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
 
             InfoBar.success(

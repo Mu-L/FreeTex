@@ -3,6 +3,8 @@ import warnings
 import argparse
 import logging
 import platform
+import sys
+import os
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import QObject, pyqtSignal, QBuffer, QByteArray, QIODevice
 from PIL import Image
@@ -75,22 +77,91 @@ class LocalProcessor(QObject):
         import unimernet.tasks as tasks
         from unimernet.common.config import Config
         from unimernet.processors import load_processor
+        import yaml
 
         self.logger.info(f"在设备上初始化模型: {self.device}")
 
-        args = argparse.Namespace(cfg_path=self.cfg_path, options=None)
-        cfg = Config(args)
+        # 读取配置文件并修正路径
+        with open(self.cfg_path, 'r', encoding='utf-8') as f:
+            cfg_dict = yaml.safe_load(f)
 
-        task = tasks.setup_task(cfg)
-        # Load model and move to device
-        self.model = task.build_model(cfg).to(self.device)
-        self.logger.info("模型已构建并移动到设备")
-        # Load processor
-        self.vis_processor = load_processor(
-            "formula_image_eval",
-            cfg.config.datasets.formula_rec_eval.vis_processor.eval,
-        )
-        self.logger.info("视觉处理器已加载")
+        # 修正模型路径(支持打包后的环境)
+        if getattr(sys, "frozen", False):
+            # 打包环境
+            if hasattr(sys, '_MEIPASS'):
+                # PyInstaller 打包环境，使用 _MEIPASS（临时解压目录）
+                base_path = sys._MEIPASS
+                self.logger.info(f"检测到 PyInstaller 打包环境，使用 _MEIPASS: {base_path}")
+            else:
+                # 其他打包方式，使用可执行文件目录
+                base_path = os.path.dirname(sys.executable)
+                self.logger.info(f"检测到打包环境，使用可执行文件目录: {base_path}")
+        else:
+            # 开发环境:使用当前目录
+            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            self.logger.info(f"开发环境，基础路径: {base_path}")
+
+        # 修正配置中的路径
+        model_path = os.path.join(base_path, "models", "unimernet_small")
+        pretrained_path = os.path.join(model_path, "unimernet_small.pth")
+
+        # 验证模型文件是否存在
+        if not os.path.exists(model_path):
+            self.logger.error(f"模型目录不存在: {model_path}")
+            # 列出 base_path 下的内容以便调试
+            if os.path.exists(base_path):
+                self.logger.info(f"base_path 内容: {os.listdir(base_path)}")
+                models_dir = os.path.join(base_path, "models")
+                if os.path.exists(models_dir):
+                    self.logger.info(f"models 目录内容: {os.listdir(models_dir)}")
+            raise FileNotFoundError(f"模型目录不存在: {model_path}")
+
+        if not os.path.exists(pretrained_path):
+            self.logger.error(f"预训练权重文件不存在: {pretrained_path}")
+            # 列出模型目录内容以便调试
+            if os.path.exists(model_path):
+                self.logger.info(f"模型目录内容: {os.listdir(model_path)}")
+            raise FileNotFoundError(f"预训练权重文件不存在: {pretrained_path}")
+
+        # 更新所有与路径相关的配置
+        cfg_dict['model']['model_name'] = model_path
+        cfg_dict['model']['pretrained'] = pretrained_path
+        cfg_dict['model']['model_config']['model_name'] = model_path
+        cfg_dict['model']['model_config']['path'] = model_path
+
+        # 更新 tokenizer_config 路径
+        if 'tokenizer_config' in cfg_dict['model']:
+            cfg_dict['model']['tokenizer_config']['path'] = model_path
+
+        self.logger.info(f"模型路径: {model_path}")
+        self.logger.info(f"预训练权重: {pretrained_path}")
+
+        # 创建临时配置文件
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8') as tmp_cfg:
+            yaml.dump(cfg_dict, tmp_cfg, allow_unicode=True)
+            tmp_cfg_path = tmp_cfg.name
+
+        try:
+            args = argparse.Namespace(cfg_path=tmp_cfg_path, options=None)
+            cfg = Config(args)
+
+            task = tasks.setup_task(cfg)
+            # Load model and move to device
+            self.model = task.build_model(cfg).to(self.device)
+            self.logger.info("模型已构建并移动到设备")
+            # Load processor
+            self.vis_processor = load_processor(
+                "formula_image_eval",
+                cfg.config.datasets.formula_rec_eval.vis_processor.eval,
+            )
+            self.logger.info("视觉处理器已加载")
+        finally:
+            # 清理临时配置文件
+            try:
+                os.unlink(tmp_cfg_path)
+            except:
+                pass
 
     def process_image(self, image_path):
         """
@@ -211,7 +282,13 @@ class LocalProcessor(QObject):
 
             # 检查是否启用多模态识别
             try:
-                with open("config.json", "r", encoding="utf-8") as f:
+                # 使用正确的配置文件路径
+                if getattr(sys, "frozen", False):
+                    config_path = os.path.join(sys._MEIPASS, "config.json")
+                else:
+                    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json")
+
+                with open(config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
                     model_config = config.get("model_config", {})
                     if model_config.get("enabled", False):

@@ -919,7 +919,28 @@ class MainWindow(QMainWindow):
     def init_tray(self):
         """初始化系统托盘"""
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(self.windowIcon())
+
+        # 确保托盘图标已设置
+        icon = self.windowIcon()
+        if icon.isNull():
+            # 如果窗口图标未设置，尝试加载默认图标
+            if platform.system() == "Darwin":  # macOS
+                icon_path = resource_path("resources/images/icon.icns")
+            else:  # Windows 和其他平台
+                icon_path = resource_path("resources/images/icon.ico")
+
+            if os.path.exists(icon_path):
+                icon = QIcon(icon_path)
+            else:
+                # 尝试 PNG 作为备选
+                fallback_path = resource_path("resources/images/icon.png")
+                if os.path.exists(fallback_path):
+                    icon = QIcon(fallback_path)
+
+        if not icon.isNull():
+            self.tray_icon.setIcon(icon)
+        else:
+            self.logger.warning("无法设置系统托盘图标：图标文件未找到")
 
         # 创建托盘菜单
         tray_menu = QMenu()
@@ -1131,27 +1152,57 @@ def setup_webengine():
         if getattr(sys, "frozen", False):
             app_dir = os.path.dirname(sys.executable)
             internal_dir = os.path.join(app_dir, "_internal")
-            
-            # 设置 QtWebEngine 进程路径
-            if os.path.exists(os.path.join(internal_dir, "QtWebEngineProcess.exe")):
-                os.environ["QTWEBENGINEPROCESS_PATH"] = os.path.join(internal_dir, "QtWebEngineProcess.exe")
-            
+
+            # 根据平台设置不同的 QtWebEngine 进程路径
+            if platform.system() == "Darwin":  # macOS
+                # 在 macOS 上，QtWebEngineProcess 没有 .exe 后缀
+                webengine_process = os.path.join(internal_dir, "QtWebEngineProcess")
+                if os.path.exists(webengine_process):
+                    os.environ["QTWEBENGINEPROCESS_PATH"] = webengine_process
+                    print(f"找到 QtWebEngine 进程: {webengine_process}")
+                else:
+                    # 尝试在 PyQt5 相关路径查找
+                    alt_path = os.path.join(internal_dir, "PyQt5", "Qt5", "lib", "QtWebEngineCore.framework", "Helpers", "QtWebEngineProcess.app", "Contents", "MacOS", "QtWebEngineProcess")
+                    if os.path.exists(alt_path):
+                        os.environ["QTWEBENGINEPROCESS_PATH"] = alt_path
+                        print(f"找到 QtWebEngine 进程（备选路径）: {alt_path}")
+            else:  # Windows
+                webengine_process = os.path.join(internal_dir, "QtWebEngineProcess.exe")
+                if os.path.exists(webengine_process):
+                    os.environ["QTWEBENGINEPROCESS_PATH"] = webengine_process
+
             # 设置其他必要的环境变量
             os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu"
             os.environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
-            
-            # 设置资源文件路径
-            if os.path.exists(os.path.join(internal_dir, "resources")):
-                os.environ["QTWEBENGINEPROCESS_RESOURCEPATH"] = os.path.join(internal_dir, "resources")
-            
+
+            # 设置资源文件路径 - 使用 QtWebEngineCore 的 resources 目录
+            resources_paths = [
+                os.path.join(internal_dir, "resources"),
+                os.path.join(internal_dir, "PyQt5", "Qt5", "resources"),
+                os.path.join(internal_dir, "PyQt5", "Qt", "resources")
+            ]
+            for res_path in resources_paths:
+                if os.path.exists(res_path):
+                    os.environ["QTWEBENGINEPROCESS_RESOURCEPATH"] = res_path
+                    print(f"找到 QtWebEngine 资源路径: {res_path}")
+                    break
+
             # 设置翻译文件路径
-            if os.path.exists(os.path.join(internal_dir, "translations")):
-                os.environ["QTWEBENGINEPROCESS_LOCALES"] = os.path.join(internal_dir, "translations")
-            
+            translations_paths = [
+                os.path.join(internal_dir, "translations"),
+                os.path.join(internal_dir, "PyQt5", "Qt5", "translations"),
+                os.path.join(internal_dir, "PyQt5", "Qt", "translations")
+            ]
+            for trans_path in translations_paths:
+                if os.path.exists(trans_path):
+                    os.environ["QTWEBENGINEPROCESS_LOCALES"] = trans_path
+                    print(f"找到 QtWebEngine 翻译路径: {trans_path}")
+                    break
+
             print(f"WebEngine进程路径: {os.environ.get('QTWEBENGINEPROCESS_PATH', '未设置')}")
             print(f"WebEngine资源路径: {os.environ.get('QTWEBENGINEPROCESS_RESOURCEPATH', '未设置')}")
             print(f"WebEngine翻译路径: {os.environ.get('QTWEBENGINEPROCESS_LOCALES', '未设置')}")
-            
+
     except Exception as e:
         print(f"设置 WebEngine 环境时出错: {e}")
 
