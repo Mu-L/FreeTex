@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.0-blue" alt="version">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL3.0-green" alt="License"></a>
   <h4>
     <a href="README.md">🇨🇳 Chinese</a>
@@ -14,146 +14,79 @@
 
 ## 🌟 Introduction
 
-FreeTex is a free intelligent formula recognition software that can identify mathematical formulas in images and convert them into editable LaTeX format.
+FreeTex is a free intelligent formula recognition software that can identify mathematical formulas in images and convert them into editable Latex format.
 
-Features:
+Video demonstration and operation tutorial:
 
-- No internet connection required  
-  Uses locally deployed models, eliminating the need for network calls and ensuring complete data privacy
-
-- Multi-type image recognition
-  Supports recognition of various image types including handwritten, printed, and scanned formulas
-
-- Simple and user-friendly operation
-  Supports three operation modes: image upload, screenshot, and paste, with shortcut keys for improved efficiency
-
-- Multiple export formats
-  Recognition results can be directly copied to Word or LaTeX format with one click, no additional operations needed
-
-- Multiple recognition engine support
-  Supports both local recognition and multimodal model recognition
-
-Video demonstration and tutorial:
-
-[![FreeTex: Free Intelligent Formula Recognition Tool](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zK31zKEPp)
-
-## 📦 Usage
-
-### 1. Quick Start
-
-1. Download the software
-
-For Windows:
-
-- [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex_setup_v1.0.0.exe)
-- [Baidu Netdisk Download](https://pan.baidu.com/s/1EFkG7EKcokDDFu69fuNDNQ?pwd=8888)(提取码: 8888)
+[![FreeTex: Free intelligent formula recognition artifact](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zK31zKEPp)
 
 
-For macOS(arm):
+## 📦 How to use
 
-- [Github](https://github.com/zstar1003/FreeTex/releases/download/v0.3.0/FreeTeX.dmg)
-- [Baidu Netdisk Download](https://pan.baidu.com/s/1NstYEU4TcWubJSAO8WcLTw?pwd=8888)(提取码: 8888)
+### 1. Quick use
+
+1. Download software
+
+- windows system:
+
+  - [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex_setup_v1.0.0.exe)
+  - [Baidu Netdisk download address](https://pan.baidu.com/s/1EFkG7EKcokDDFu69fuNDNQ?pwd=8888)(Extraction code: 8888)
+
+- macos system (arm):
+
+  - [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex-Installer-1.0.0.dmg)
 
 
-2. Install the software and start using
+2. Install the software and start using it
 
-For specific usage instructions, please refer to the tutorial above.
+  For specific usage, please refer to the adaptation tutorial above.
 
 > [!NOTE]
-> For Windows version, the software must be placed in a non-Chinese path to run properly.
+> When using the windows version, the software needs to be placed in a non-Chinese path, otherwise it will not start normally.
 
-### 2. Run from Source
+### 2. Source code execution
 
-#### Environment Setup
+> [!NOTE]
+> Please note: The main branch is developed in a mac environment. If it is a windows environment, it is recommended to switch to the win branch of this project.
 
-Create a new environment:
+#### Configure environment
 
+uv:
 ```bash
-conda create -n freetex python=3.10
-conda activate freetex
+uv sync
 ```
 
-Install dependencies:
+#### Download model
 
-```bash
-pip install -r requirements.txt
-```
+Download the unimernet_small model and place it under `models`:
 
-Replace CPU-based PyTorch with GPU version:
-
-```bash
-pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu118
-```
-
-#### Download Model
-
-Download the `unimernet_small` model and place it under `models`:
-
+Download method:
 ```bash
 cd models
 git lfs install
 git clone https://huggingface.co/wanderkid/unimernet_small
 ```
 
-#### Compile Resource Files
-
-```bash
-pyrcc5 resources/app.qrc -o resources/app_rc.py -compress 3
-```
-
-#### Launch Application
+#### Run the software
 
 ```bash
 python main.py
 ```
 
-Once running, the usage is the same as the quick start method above.
+After running, the software operates in the same manner as in the previous section.
 
-# 🏗️ Project Structure
 
-```
-FreeTex/
-├── .gitignore
-├── .python-version
-├── LICENSE
-├── README.md
-├── README_EN.md
-├── config.json
-├── demo.yaml
-├── docs/
-│   ├── images/
-│   ├── index.html
-│   ├── script.js
-│   └── style.css
-├── libs/
-│   ├── index.html
-│   └── katex/
-├── main.py
-├── main.spec
-├── models/
-├── pyproject.toml
-├── qfluentwidgets/
-├── requirements.txt
-├── resources/
-├── scripts/
-├── test_imgs/
-├── tools/
-├── unimernet/
-└── uv.lock
-```
+## 🚀 Acknowledgments
 
-## 📮 Notice
-**Call for Bad Cases:** If you have encountered any cases where the model performs poorly, I would greatly appreciate it if you could share them in the issue.
+This project is developed based on the following open source projects:
 
-## 🚀 Acknowledgements
+- [UniMERNet](https://github.com/opendatalab/UniMERNet)
 
-This project is based on the following open-source projects:
+- [PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
 
-* [UniMERNet](https://github.com/opendatalab/UniMERNet)
-* [PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
-* [KaTeX](https://github.com/KaTeX/KaTeX)
+- [KaTeX](https://github.com/KaTeX/KaTeX)
 
-Thanks to all the contributors:
+Thanks to the contributors to this project:
 
 <a href="https://github.com/zstar1003/FreeTex/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=zstar1003/FreeTex" />

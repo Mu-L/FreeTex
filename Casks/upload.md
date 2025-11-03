@@ -17,5 +17,5 @@ brew style --fix freetex
 
 4. 下载
 
-brew tap freetex https://github.com/zstar1003/freetex
+brew tap zstar1003/FreeTex
 brew install --cask freetex
