@@ -57,8 +57,8 @@ exe = EXE(
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
+    codesign_identity='Developer ID Application: Xingyu Zhang (8VG8TNH2F2)',
+    entitlements_file='entitlements.plist',
 )
 
 coll = COLLECT(

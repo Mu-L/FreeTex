@@ -1,6 +1,6 @@
 cask "freetex" do
   version "1.0.0"
-  sha256 "20f784bbfee37ba75d6a7a40275ec09babf064a73e62f30dac6165db4d2d597b"
+  sha256 "072bf0a4db144fb2a44c0fbaffe9ef7368dcb93d42aa21de10f5119d53239444"
 
   url "https://github.com/zstar1003/FreeTex/releases/download/v#{version}/FreeTex-Installer-#{version}.dmg"
   name "FreeTex"
