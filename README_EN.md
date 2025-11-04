@@ -34,7 +34,8 @@ Video demonstration and operation tutorial:
 
 - macos system (arm):
 
-  - [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex-Installer-1.0.0.dmg)
+  - Method 1: Direct download: [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex-Installer-1.0.0.dmg)
+  - Method 2: Install using Homebrew: `brew install --cask freetex`
 
 
 2. Install the software and start using it

@@ -34,7 +34,8 @@ FreeTex是一个免费的公式智能识别软件，它可以识别图像中的�
 
 - macos系统(arm)：
 
-  - [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex-Installer-1.0.0.dmg)
+  - 方式一；直接下载：[Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex-Installer-1.0.0.dmg)
+  - 方式二；用Homebrew进行安装：`brew install --cask freetex`
 
 
 2. 安装软件，开始使用
