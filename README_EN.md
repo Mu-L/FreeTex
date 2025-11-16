@@ -30,12 +30,12 @@ Video demonstration and operation tutorial:
 - windows system:
 
   - [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex_setup_v1.0.0.exe)
-  - [Baidu Netdisk download address](https://pan.baidu.com/s/1EFkG7EKcokDDFu69fuNDNQ?pwd=8888)(Extraction code: 8888)
+  - [kuake](https://pan.quark.cn/s/6d094961e2c3)
 
 - macos system (arm):
 
   - Method 1: Direct download: [Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex-Installer-1.0.0.dmg)
-  - Method 2: Install using Homebrew: `brew install --cask freetex`
+  - Method 2: Install using Homebrew: `brew install freetex`
 
 
 2. Install the software and start using it
