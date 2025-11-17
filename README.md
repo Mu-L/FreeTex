@@ -36,14 +36,16 @@ FreeTex是一个免费的公式智能识别软件，它可以识别图像中的�
 
   - 方式一；直接下载：[Github](https://github.com/zstar1003/FreeTex/releases/download/v1.0.0/FreeTex-Installer-1.0.0.dmg)
   - 方式二；用Homebrew进行安装：`brew install freetex`
+  > [!NOTE]
+  > mac版本使用多模态模型时，会出现`No module named 'openai'`这个问题，解决方式见[issue#44](https://github.com/zstar1003/FreeTex/issues/44)
 
 
 2. 安装软件，开始使用
 
   具体使用方式可参考上面的适配教程。
 
-> [!NOTE]
-> windows版本使用时需放置软件在非中文路径下，否则无法正常启动。
+  > [!NOTE]
+  > windows版本使用时需放置软件在非中文路径下，否则无法正常启动。
 
 ### 2. 源码运行
 
