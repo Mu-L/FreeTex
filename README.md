@@ -20,6 +20,7 @@ FreeTex是一个免费的公式智能识别软件，它可以识别图像中的�
 
 [![FreeTex：免费的智能公式识别神器](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zK31zKEPp)
 
+想对识别结果进行编辑？可以看看我的工具站：https://xdxsb.top/FreeTool
 
 ## 📦 使用方式
 

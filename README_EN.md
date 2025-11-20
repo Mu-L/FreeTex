@@ -20,6 +20,7 @@ Video demonstration and operation tutorial:
 
 [![FreeTex: Free intelligent formula recognition artifact](https://i0.hdslb.com/bfs/archive/54175a1a4552c6236d05188bb63ff9ff26ccea54.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV1zK31zKEPp)
 
+Want to edit the recognition result? You can check out my tool station: https://xdxsb.top/FreeTool
 
 ## 📦 How to use
 
